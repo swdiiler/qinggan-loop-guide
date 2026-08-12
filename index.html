@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>青甘大环线 V80房车8天自驾攻略</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    line-height: 1.6;
+  }
+  .page {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #fff;
+    padding-bottom: 40px;
+    box-shadow: 0 0 30px rgba(0,0,0,.08);
+  }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, #1a2a3a 0%, #2d5a4a 40%, #1a5276 100%);
+    color: #fff;
+    padding: 28px 40px 20px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .header .subtitle {
+    font-size: 14px;
+    opacity: .8;
+    margin-top: 4px;
+  }
+  .stats-bar {
+    display: flex;
+    gap: 0;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .stat-item {
+    flex: 1;
+    min-width: 110px;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,.15);
+    padding: 4px 8px;
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-val {
+    font-size: 24px;
+    font-weight: 700;
+    color: #FFD700;
+  }
+  .stat-label {
+    font-size: 12px;
+    opacity: .75;
+    margin-top: 2px;
+  }
+
+  /* ===== Map (大地图) ===== */
+  .map-section { padding: 20px 40px 16px; }
+  .map-wrapper {
+    position: relative;
+    width: 100%;
+    height: 900px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.12);
+    border: 2px solid #e0e0e0;
+    background: #e8eef5;
+  }
+  #map {
+    width: 100%;
+    height: 100%;
+    background: #e8eef5;
+  }
+  .leaflet-container {
+    background: #e8eef5 !important;
+    cursor: default !important;
+  }
+
+  /* Map overlays */
+  .map-legend {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: rgba(255,255,255,.95);
+    border-radius: 8px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.2);
+    font-size: 12px;
+    line-height: 1.8;
+    max-width: 240px;
+  }
+  .legend-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #1a1a2e;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 6px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 5px 0;
+  }
+  .legend-swatch {
+    width: 28px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .map-info {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(30,42,58,.92);
+    color: #fff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    max-width: 240px;
+    line-height: 1.7;
+  }
+  .map-info .info-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #FFD700;
+  }
+  .map-info .info-line { margin: 3px 0; opacity: .9; }
+
+  .day-toggle {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 520px;
+  }
+  .day-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,.7);
+    background: rgba(255,255,255,.9);
+    color: #1a1a2e;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .day-btn:hover { background: #fff; transform: translateY(-1px); }
+  .day-btn.active { color: #fff; }
+  .day-btn.d1.active, .day-btn.d2.active, .day-btn.d3.active { background: #FF6B35; border-color: #FF6B35; }
+  .day-btn.d4.active { background: #F59E0B; border-color: #F59E0B; }
+  .day-btn.d5.active, .day-btn.d6.active { background: #0D9488; border-color: #0D9488; }
+  .day-btn.d7.active, .day-btn.d8.active { background: #2563EB; border-color: #2563EB; }
+
+  /* ===== Markers ===== */
+  .city-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.5);
+  }
+  .scenic-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #F59E0B;
+    color: #fff;
+    font-size: 14px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  }
+  .scenic-marker::before { content: "★"; font-weight: 700; }
+  .supply-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #DC2626;
+    color: #fff;
+    font-size: 18px;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,.5);
+    animation: pulse 2.5s infinite;
+  }
+  .supply-marker.normal {
+    background: #0EA5E9;
+    animation: none;
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+    border-radius: 50%;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,.5), 0 2px 10px rgba(0,0,0,.5); }
+    50% { box-shadow: 0 0 0 12px rgba(220,38,38,0), 0 2px 10px rgba(0,0,0,.5); }
+  }
+  .pass-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    color: #92400E;
+    font-size: 18px;
+    border: none;
+    text-shadow: 0 1px 4px rgba(255,255,255,.9), 0 0 6px rgba(255,255,255,.6);
+  }
+  .landmark-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #6B7280;
+    color: #fff;
+    font-size: 11px;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  }
+
+  /* Permanent labels */
+  .leaflet-tooltip.permanent-label {
+    background: rgba(255,255,255,.95);
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a1a2e;
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+    white-space: nowrap;
+  }
+  .leaflet-tooltip.permanent-label.critical {
+    background: rgba(254,226,226,.97);
+    border-color: #DC2626;
+    color: #991B1B;
+  }
+  .leaflet-tooltip.permanent-label::before { display: none; }
+  .leaflet-tooltip.hover-label {
+    background: rgba(255,255,255,.98);
+    border: 1px solid rgba(0,0,0,.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #1a1a2e;
+    box-shadow: 0 4px 16px rgba(0,0,0,.25);
+    max-width: 280px;
+  }
+  .leaflet-tooltip.hover-label .tt-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #1a1a2e;
+  }
+  .leaflet-tooltip.hover-label .tt-day {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    margin-right: 6px;
+  }
+  .leaflet-tooltip.hover-label .tt-info {
+    color: #444;
+    margin: 4px 0;
+    line-height: 1.6;
+  }
+  .leaflet-tooltip.hover-label .tt-warn {
+    color: #DC2626;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+
+  /* ===== Itinerary ===== */
+  .itinerary-section { padding: 16px 40px; }
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid #2d5a4a;
+  }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .day-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 16px;
+    background: #fff;
+    transition: box-shadow .2s;
+    position: relative;
+  }
+  .day-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+  .day-card.critical { border-color: #DC2626; border-width: 2px; }
+  .day-card.expanded {
+    grid-column: 1 / -1;
+    box-shadow: 0 6px 24px rgba(0,0,0,.12);
+    border-color: #2d5a4a;
+  }
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .day-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .day-badge.d1,.day-badge.d2,.day-badge.d3 { background: #FF6B35; }
+  .day-badge.d4 { background: #F59E0B; }
+  .day-badge.d5,.day-badge.d6 { background: #0D9488; }
+  .day-badge.d7,.day-badge.d8 { background: #2563EB; }
+  .day-route { font-size: 15px; font-weight: 600; color: #1a1a2e; }
+  .day-meta { font-size: 12px; color: #666; margin-top: 2px; }
+  .expand-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    background: #f0f2f5;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .expand-btn:hover { background: #e0e3e8; }
+  .day-card.expanded .expand-btn { background: #2d5a4a; color: #fff; }
+  .day-summary { font-size: 13px; color: #555; line-height: 1.7; margin: 6px 0; }
+  .day-detail {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #d0d0d0;
+  }
+  .day-card.expanded .day-detail { display: block; }
+  .day-card.expanded .day-summary { display: none; }
+
+  /* Timeline */
+  .timeline { margin: 10px 0; }
+  .timeline-row {
+    display: flex;
+    gap: 10px;
+    margin: 6px 0;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .timeline-time {
+    flex-shrink: 0;
+    width: 60px;
+    font-weight: 700;
+    color: #2d5a4a;
+    font-size: 12px;
+  }
+  .timeline-content { color: #444; }
+  .timeline-content strong { color: #1a1a2e; }
+
+  /* Task checklist */
+  .task-block {
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+  }
+  .task-block-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0369A1;
+    margin-bottom: 6px;
+  }
+  .task-block-title::before { content: "📋 "; }
+  .task-list { list-style: none; margin: 0; padding: 0; }
+  .task-list li {
+    font-size: 12.5px;
+    padding: 3px 0 3px 22px;
+    position: relative;
+    color: #444;
+    line-height: 1.6;
+  }
+  .task-list li::before {
+    content: "☐";
+    position: absolute;
+    left: 0;
+    color: #0369A1;
+    font-size: 14px;
+  }
+  .task-list li.done::before { content: "☑"; color: #16A34A; }
+  .task-list li.done { color: #888; text-decoration: line-through; }
+
+  /* Warning box */
+  .warn-block {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+  }
+  .warn-block-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #991B1B;
+    margin-bottom: 6px;
+  }
+  .warn-block-title::before { content: "⚠️ "; }
+  .warn-list { list-style: none; margin: 0; padding: 0; }
+  .warn-list li {
+    font-size: 12.5px;
+    padding: 3px 0 3px 16px;
+    position: relative;
+    color: #7F1D1D;
+    line-height: 1.6;
+  }
+  .warn-list li::before {
+    content: "!";
+    position: absolute;
+    left: 0;
+    color: #DC2626;
+    font-weight: 700;
+  }
+
+  /* Dining */
+  .food-block {
+    background: #FFF7ED;
+    border: 1px solid #FED7AA;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+  }
+  .food-block-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #9A3412;
+    margin-bottom: 6px;
+  }
+  .food-block-title::before { content: "🍽️ "; }
+  .food-list { list-style: none; margin: 0; padding: 0; }
+  .food-list li {
+    font-size: 12.5px;
+    padding: 3px 0 3px 16px;
+    position: relative;
+    color: #7C2D12;
+    line-height: 1.6;
+  }
+  .food-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #EA580C;
+    font-weight: 700;
+  }
+
+  /* Scenic detail */
+  .scenic-block {
+    background: #FAFAFA;
+    border-left: 3px solid #A78BFA;
+    border-radius: 0 8px 8px 0;
+    padding: 8px 12px;
+    margin: 8px 0;
+  }
+  .scenic-block-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #5B21B6;
+    margin-bottom: 4px;
+  }
+  .scenic-block-title::before { content: "🎫 "; }
+  .scenic-block p { font-size: 12.5px; color: #444; line-height: 1.6; margin: 2px 0; }
+
+  /* Health/altitude note */
+  .alt-block {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 12.5px;
+    color: #166534;
+    line-height: 1.6;
+  }
+  .alt-block::before { content: "🫁 "; }
+
+  /* V80 tip */
+  .v80-tip {
+    background: #FEF3C7;
+    border-left: 3px solid #F59E0B;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    margin-top: 8px;
+    color: #78350F;
+    line-height: 1.6;
+  }
+  .v80-tip strong { color: #92400E; }
+  .v80-tip.critical {
+    background: #FEE2E2;
+    border-color: #DC2626;
+    color: #7F1D1D;
+  }
+  .v80-tip.critical strong { color: #991B1B; }
+  .v80-tip-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #92400E;
+    margin: 10px 0 6px;
+  }
+  .v80-tip-section-title::before { content: "🚐 "; }
+  .v80-tip-list { list-style: none; margin: 0; padding: 0; }
+  .v80-tip-list li {
+    font-size: 12.5px;
+    padding: 4px 0 4px 18px;
+    position: relative;
+    color: #78350F;
+    line-height: 1.6;
+  }
+  .v80-tip-list li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #F59E0B;
+    font-weight: 700;
+  }
+  .v80-tip-list.critical li { color: #7F1D1D; }
+  .v80-tip-list.critical li::before { color: #DC2626; }
+
+  .stay-info {
+    font-size: 12.5px;
+    color: #2d5a4a;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed #e0e0e0;
+    font-weight: 600;
+  }
+  .stay-info::before { content: "🏠 "; }
+  .stay-detail { font-size: 12px; color: #666; font-weight: 400; }
+
+  /* ===== Bottom ===== */
+  .bottom-section {
+    padding: 16px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .reminder-box {
+    background: linear-gradient(135deg, #FEF2F2, #FFF7ED);
+    border: 1px solid #FECACA;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .reminder-box h3 {
+    font-size: 16px;
+    color: #991B1B;
+    margin-bottom: 10px;
+  }
+  .reminder-item {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+  .reminder-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #DC2626;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .reminder-text strong { color: #991B1B; }
+
+  .supply-box {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .supply-box h3 {
+    font-size: 16px;
+    color: #166534;
+    margin-bottom: 10px;
+  }
+  .supply-table {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+  }
+  .supply-table th {
+    text-align: left;
+    padding: 4px 8px;
+    background: #DCFCE7;
+    color: #166534;
+    font-weight: 600;
+  }
+  .supply-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .supply-table .warn { color: #DC2626; font-weight: 700; }
+
+  .footer {
+    text-align: center;
+    padding: 20px 40px;
+    font-size: 12px;
+    color: #999;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  @media (max-width: 768px) {
+    .cards-grid, .bottom-section { grid-template-columns: 1fr; }
+    .header, .map-section, .itinerary-section, .bottom-section { padding-left: 16px; padding-right: 16px; }
+    .stat-item { min-width: 90px; }
+    .map-wrapper { height: 500px; }
+    .day-toggle { max-width: 300px; }
+    .day-card.expanded { grid-column: 1; }
+    .timeline-time { width: 50px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>🚐 青甘大环线 · V80房车8天自驾攻略</h1>
+    <div class="subtitle">兰州出发 · 顺时针环线 · 大通V80 6座 2021款 专属路线规划</div>
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-val">8</div><div class="stat-label">天行程</div></div>
+      <div class="stat-item"><div class="stat-val">2600</div><div class="stat-label">总里程(km)</div></div>
+      <div class="stat-item"><div class="stat-val">6</div><div class="stat-label">人/车</div></div>
+      <div class="stat-item"><div class="stat-val">4120</div><div class="stat-label">最高海拔(m)</div></div>
+      <div class="stat-item"><div class="stat-val">9-13K</div><div class="stat-label">预算(元)</div></div>
+    </div>
+  </div>
+
+  <div class="map-section">
+    <div class="map-wrapper">
+      <div id="map"></div>
+      <div class="day-toggle" id="dayToggle">
+        <button class="day-btn d1 active" data-day="all">全部路线</button>
+        <button class="day-btn d1" data-day="D1">D1 兰州→青海湖</button>
+        <button class="day-btn d2" data-day="D2">D2 茶卡→德令哈</button>
+        <button class="day-btn d3" data-day="D3">D3 翡翠湖→敦煌</button>
+        <button class="day-btn d4" data-day="D4">D4 敦煌休整</button>
+        <button class="day-btn d5" data-day="D5">D5→嘉峪关</button>
+        <button class="day-btn d6" data-day="D6">D6 七彩丹霞</button>
+        <button class="day-btn d7" data-day="D7">D7 祁连→西宁</button>
+        <button class="day-btn d8" data-day="D8">D8→兰州</button>
+      </div>
+      <div class="map-info">
+        <div class="info-title">🗺️ 路线说明</div>
+        <div class="info-line">🟠 橙色 = D1-D3 青海段</div>
+        <div class="info-line">🟡 金色 = D4 敦煌休整</div>
+        <div class="info-line">🟢 青色 = D5-D6 甘肃段</div>
+        <div class="info-line">🔵 蓝色 = D7-D8 祁连返程</div>
+        <div class="info-line">🔴 红色脉冲 = 关键加油点</div>
+        <div class="info-line" style="margin-top:6px;opacity:.7">点击上方按钮可筛选单日路线</div>
+      </div>
+      <div class="map-legend">
+        <div class="legend-title">图例</div>
+        <div class="legend-item">
+          <span class="legend-swatch"><span class="city-marker" style="background:#FF6B35">D1</span></span>
+          <span>主要城市(住宿)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch"><span class="scenic-marker"></span></span>
+          <span>重要景点 ★</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch"><span class="supply-marker">⛽</span></span>
+          <span>关键加油(大柴旦)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch"><span class="supply-marker normal">⛽</span></span>
+          <span>常规补给点</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch"><span class="pass-marker">▲</span></span>
+          <span>垭口/山口</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch"><span class="landmark-marker">·</span></span>
+          <span>路边地标</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="itinerary-section">
+    <div class="section-title">📅 每日行程规划 <span style="font-size:13px;font-weight:400;color:#888;margin-left:8px">点击卡片展开详细攻略</span></div>
+    <div class="cards-grid" id="cardsGrid">
+
+      <!-- ===== D1 ===== -->
+      <div class="day-card" data-day="D1">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d1">D1</div>
+          <div>
+            <div class="day-route">兰州 → 西宁(补给) → 青海湖·黑马河</div>
+            <div class="day-meta">370km · 5h+ · 海拔 1520→3820→3200m · 行程最紧凑的一天</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">上午兰州出发走G6高速到西宁补给，下午翻拉脊山到青海湖黑马河。海拔急升需注意高反适应。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">07:00</div><div class="timeline-content"><strong>兰州出发前</strong>：吃一碗牛肉面（马子禄/白建强/吾穆勒），检查油箱、水箱、电瓶状态，确认随车工具齐全</div></div>
+            <div class="timeline-row"><div class="timeline-time">08:00</div><div class="timeline-content"><strong>走G6京藏高速西行</strong>，兰州出城避开7:30-9:00早高峰，全程220km约2.5h</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:30</div><div class="timeline-content"><strong>抵达西宁</strong>——这是全程最后一个大型补给点，必须完成所有补给工作</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:30-13:00</div><div class="timeline-content"><strong>西宁补给（3件事必须完成）</strong>：①加满0号柴油+补充车用尿素 ②超市采购食材/饮用水/药品 ③排污+加满清水+确认锂电池满电</div></div>
+            <div class="timeline-row"><div class="timeline-time">13:00</div><div class="timeline-content"><strong>午餐</strong>：西宁市区吃手抓羊肉/酿皮/酸奶，顺便休整</div></div>
+            <div class="timeline-row"><div class="timeline-time">13:30</div><div class="timeline-content"><strong>从西宁出发走G109</strong>，建议14:00前出发，确保天黑前到达黑马河</div></div>
+            <div class="timeline-row"><div class="timeline-time">14:30</div><div class="timeline-content"><strong>翻越拉脊山垭口（3820m）</strong>——2.0T动力明显衰减，提前降挡拉高转速冲坡</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:00</div><div class="timeline-content">经<strong>日月山</strong>（3520m，文成公主进藏纪念地）、<strong>倒淌河</strong>（"天下河水皆东流，唯有此河向西淌"）</div></div>
+            <div class="timeline-row"><div class="timeline-time">16:00</div><div class="timeline-content"><strong>二郎剑景区</strong>（青海湖南岸江西沟镇）——7-8月油菜花盛开，可走牧民小道（20-50元/车）直达湖边，比官方景区（90元/人）便宜</div></div>
+            <div class="timeline-row"><div class="timeline-time">17:30</div><div class="timeline-content"><strong>抵达黑马河</strong>（青海湖西南岸）——看日落的最佳位置，驻车过夜</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>西宁加满0号柴油（这是最后一个可靠大加油站）</li>
+              <li>补充车用尿素（国VI车型必加）</li>
+              <li>超市采购3天食材：蔬菜/肉/鸡蛋/米面/调料</li>
+              <li>采购饮用水（每人每天2L，先买3天量=36L）</li>
+              <li>采购常用药品：感冒药/肠胃药/创可贴/晕车药</li>
+              <li>排污+加满清水+确认锂电池满电</li>
+              <li>检查胎压（前4.5bar/后5.0bar）、备胎、随车工具</li>
+              <li>14:00前从西宁出发（确保天黑前到黑马河）</li>
+              <li>到达青海湖后静坐休息1小时再活动</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项</div>
+            <ul class="warn-list">
+              <li>海拔从1520m骤升至3820m（拉脊山）再降到3200m（青海湖），<strong>爬升极快</strong>，车上人员可能出现高反</li>
+              <li>到达青海湖后<strong>不洗澡、不剧烈运动</strong>，静坐适应，多喝热水</li>
+              <li>备好氧气瓶和红景天，如有头痛恶心立即吸氧</li>
+              <li>如果15:00后才从西宁出发，天黑前到不了黑马河——可在<strong>倒淌河镇</strong>（距西宁约100km）先住一晚，第二天一早到青海湖看日出</li>
+              <li>青海湖夜间温度可降至5-10℃，<strong>开启驻车暖风</strong></li>
+              <li>建议两人轮换驾驶：兰州→西宁段一人，西宁→青海湖段换人</li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：兰州牛肉面（马子禄/白建强/吾穆勒，7:00开门）</li>
+              <li>午餐：西宁手抓羊肉/酿皮/酸奶（莫家街/大新街夜市附近）</li>
+              <li>晚餐：房车自炊（青海湖边营地，可煮火锅/炒菜）</li>
+              <li>零食：在西宁超市采购水果、巧克力、能量棒</li>
+            </ul>
+          </div>
+
+          <div class="scenic-block">
+            <div class="scenic-block-title">二郎剑景区</div>
+            <p>青海湖南岸主景区，门票90元/人。7-8月油菜花盛开最美。也可走牧民小道（20-50元/车）直达湖边，人少景美性价比高。油菜花田拍照注意不要踩踏庄稼。</p>
+          </div>
+
+          <div class="alt-block">今日海拔变化剧烈（1520m→3820m→3200m），是全程高反风险最高的一天。有高血压/心脏病/孕妇/幼儿的乘客需特别注意，必要时在倒淌河降低海拔过夜。</div>
+
+          <div class="v80-tip-section-title">V80 专属驾驶提示</div>
+          <div class="v80-tip">
+            <ul class="v80-tip-list">
+              <li>拉脊山垭口海拔3820m，2.0T柴油动力衰减约15-20%，<strong>提前降挡拉高转速到2500转以上冲坡</strong>，不要在坡道中途停车</li>
+              <li>环湖西路部分路段限高3.5m，V80高3.05m可通行，但注意个别地下通道限3m需绕行</li>
+              <li>当天行程紧凑（6-7h车程+补给），<strong>务必早上8点前出发</strong></li>
+              <li>西宁市区加油推荐中石油/中石化大站，油品更可靠</li>
+              <li>到达黑马河营地后先接水电桩充电，夜间开暖风耗电大</li>
+            </ul>
+          </div>
+
+          <div class="stay-info">青海湖·黑马河营地 <span class="stay-detail">（有水电桩，约100-200元/晚，海拔3200m）</span></div>
+        </div>
+      </div>
+
+      <!-- ===== D2 ===== -->
+      <div class="day-card" data-day="D2">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d2">D2</div>
+          <div>
+            <div class="day-route">青海湖日出 → 茶卡盐湖 → 德令哈</div>
+            <div class="day-meta">360km · 4.5h · 海拔 3200→3100→2980m · "天空之镜"打卡日</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">清晨看青海湖日出，上午到茶卡盐湖拍照，下午赶往德令哈过夜（海拔更低更舒适）。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">06:00</div><div class="timeline-content"><strong>青海湖日出</strong>——黑马河是最佳观赏点，日出时间约6:00-6:30（7-8月），提前5分钟到湖边占位</div></div>
+            <div class="timeline-row"><div class="timeline-time">07:00</div><div class="timeline-content">日出后房车做早餐，收拾行装出发</div></div>
+            <div class="timeline-row"><div class="timeline-time">08:00</div><div class="timeline-content"><strong>出发前往茶卡盐湖</strong>，走G109转茶德高速，全程约160km/2h</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:00</div><div class="timeline-content"><strong>抵达茶卡盐湖</strong>——"天空之镜"，门票60元+小火车50元</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:00-14:00</div><div class="timeline-content"><strong>游览茶卡盐湖</strong>——坐小火车到湖中心，脱鞋下水拍照。<strong>最佳拍摄时间是下午4-6点</strong>（光线斜射镜面效果最好），但考虑行程安排建议上午游览</div></div>
+            <div class="timeline-row"><div class="timeline-time">14:00</div><div class="timeline-content">午餐（茶卡镇简餐/房车自炊），出发前往德令哈</div></div>
+            <div class="timeline-row"><div class="timeline-time">14:00-17:00</div><div class="timeline-content"><strong>走茶德高速到德令哈</strong>（约200km/2.5h），高速路况好但服务区少</div></div>
+            <div class="timeline-row"><div class="timeline-time">17:00</div><div class="timeline-content"><strong>抵达德令哈</strong>——海西州首府，海拔2980m比茶卡低，过夜更舒适。城市补给方便</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>早起看日出（定好6:00闹钟，提前查天气）</li>
+              <li>出发前确认油量≥半箱（茶卡→德令哈服务区少）</li>
+              <li>茶卡盐湖：带拖鞋/凉鞋（盐水腐蚀皮肤）</li>
+              <li>茶卡盐湖：穿亮色/浅色衣服拍照出片</li>
+              <li>茶卡盐湖：带墨镜+防晒霜（盐面反光极强）</li>
+              <li>出发前给手机/相机充满电（拍照耗电大）</li>
+              <li>到达德令哈后补充水和食材</li>
+              <li>检查明天D3大柴旦加油计划（最重要的一天）</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项</div>
+            <ul class="warn-list">
+              <li>茶卡海拔3100m，<strong>不建议在此过夜</strong>（海拔偏高影响睡眠），赶往德令哈（2980m）更舒服</li>
+              <li>茶卡→德令哈走茶德高速，<strong>服务区少</strong>，出发前确认油量≥半箱、上好厕所</li>
+              <li>盐湖水面反光极强，<strong>必须戴墨镜</strong>，防晒霜SPF50+涂满暴露皮肤</li>
+              <li>盐水会腐蚀皮肤和伤口，有伤口的提前贴防水创可贴</li>
+              <li>盐湖拍照不要走太深，盐层下可能有溶洞，<strong>跟随人群路线</strong></li>
+              <li>小火车排队人多时可以先步行进去，回来再坐</li>
+              <li>今天是为明天D3做准备的关键日——提前规划好大柴旦加油</li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：房车自炊（煮鸡蛋/面包/牛奶/咖啡）</li>
+              <li>午餐：茶卡镇简餐或房车自炊（茶卡镇餐饮一般，建议自带）</li>
+              <li>晚餐：德令哈市区餐馆（川菜/清真/手抓羊肉，物价合理）</li>
+              <li>推荐：德令哈夜市烤羊肉串+酸奶</li>
+            </ul>
+          </div>
+
+          <div class="scenic-block">
+            <div class="scenic-block-title">茶卡盐湖 — "天空之镜"</div>
+            <p>门票60元/人，小火车50元/人。最佳拍摄时间是下午4-6点（光线斜射镜面效果最好）。穿红色/黄色/白色裙子出片率最高。建议自带拖鞋，租鞋10元/双但卫生一般。盐湖内禁止游泳和洗涤。游览时间2-3小时。</p>
+          </div>
+
+          <div class="alt-block">今日海拔缓慢下降（3200m→3100m→2980m），高反风险较低，但仍保持平稳活动节奏，不剧烈运动。</div>
+
+          <div class="v80-tip-section-title">V80 专属驾驶提示</div>
+          <div class="v80-tip">
+            <ul class="v80-tip-list">
+              <li>茶德高速路况好但<strong>服务区少</strong>，出发前确认油量≥半箱、备好饮用水</li>
+              <li>茶卡盐湖停车场较大，V80车身长5.97m需找宽敞车位，建议停在外围</li>
+              <li>盐湖区域空气含盐量高，停车后建议<strong>关紧车窗</strong>，避免盐分进入车内腐蚀</li>
+              <li>今天驾驶强度不大，但明天D3是全程最长最关键的一天，<strong>今晚早睡养精蓄锐</strong></li>
+              <li>到达德令哈后检查轮胎——明天G315路况复杂，胎压要标准</li>
+            </ul>
+          </div>
+
+          <div class="stay-info">德令哈市区营地 <span class="stay-detail">（城市补给方便，有加油站/超市/医院，海拔2980m）</span></div>
+        </div>
+      </div>
+
+      <!-- ===== D3 ===== -->
+      <div class="day-card critical" data-day="D3">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d3">D3</div>
+          <div>
+            <div class="day-route">德令哈 → 翡翠湖 → 水上雅丹 → 敦煌</div>
+            <div class="day-meta">500km · 6-7h · 海拔 2980→3648→1100m · ⚠️ 全程最长最关键一天</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">全程最长最关键的一天！大柴旦必须加满油+带备用油桶，翻当金山长下坡，傍晚抵达敦煌。建议7点出发，两人轮换驾驶。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">07:00</div><div class="timeline-content"><strong>德令哈出发</strong>——今天路程最长（500km），务必早起！两人轮换驾驶</div></div>
+            <div class="timeline-row"><div class="timeline-time">07:00-09:30</div><div class="timeline-content"><strong>德令哈→大柴旦</strong>（220km/2.5h），走G315西行，路况良好</div></div>
+            <div class="timeline-row"><div class="timeline-time">09:30</div><div class="timeline-content">⚠️ <strong>大柴旦加油！全程最关键！</strong>在大柴旦镇加满0号柴油+加20L备用油桶。大柴旦→敦煌约500km基本无可靠加油站</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:00</div><div class="timeline-content"><strong>翡翠湖</strong>（大柴旦以西约11km）——薄荷绿色盐湖，免费（部分收取60元），比茶卡人少，航拍出片</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:00-11:00</div><div class="timeline-content">游览翡翠湖，拍照打卡</div></div>
+            <div class="timeline-row"><div class="timeline-time">11:00</div><div class="timeline-content"><strong>走G315前往水上雅丹</strong>（约240km/3h），途经网红<strong>U型公路</strong>（G315 766/780km处）</div></div>
+            <div class="timeline-row"><div class="timeline-time">12:30</div><div class="timeline-content">途经<strong>U型公路</strong>——网红打卡点，<strong>严禁在公路中间拍照！</strong>路边有观景台，车停观景台</div></div>
+            <div class="timeline-row"><div class="timeline-time">14:00</div><div class="timeline-content"><strong>抵达水上雅丹</strong>——全球唯一水上雅丹地貌，门票60元+观光车60元</div></div>
+            <div class="timeline-row"><div class="timeline-time">14:00-15:30</div><div class="timeline-content">游览水上雅丹（1-1.5小时足够），午餐房车简餐</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:30</div><div class="timeline-content"><strong>出发翻越当金山→敦煌</strong>（约280km/3.5h）</div></div>
+            <div class="timeline-row"><div class="timeline-time">16:30</div><div class="timeline-content"><strong>翻越当金山垭口（3648m）</strong>——青甘分界，长下坡约30km，AMT手动模式挂2-3挡控速</div></div>
+            <div class="timeline-row"><div class="timeline-time">19:00</div><div class="timeline-content"><strong>抵达敦煌</strong>——海拔降至1100m，气温明显升高，终于到了！</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>⚠️ 大柴旦加满0号柴油（全程最关键加油点！）</li>
+              <li>⚠️ 大柴旦购买20L便携柴油桶并加满（备用）</li>
+              <li>大柴旦超市补充饮用水和零食（之后无补给）</li>
+              <li>翡翠湖拍照：无人机航拍效果最佳</li>
+              <li>U型公路：只在观景台拍照，绝不站在路中间</li>
+              <li>水上雅丹：买观光车票省体力（走路太远）</li>
+              <li>当金山下坡前切换AMT手动模式（2-3挡）</li>
+              <li>两人轮换驾驶，每2小时换一次</li>
+              <li>如果时间不够（15:00还没到水上雅丹），果断放弃水上雅丹直奔敦煌</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项（全程最高风险日）</div>
+            <ul class="warn-list">
+              <li><strong>大柴旦→水上雅丹→敦煌全程约500km，中间基本没有可靠加油站！</strong>V80满油续航理论660km，但高原爬坡油耗飙升到12-14L/100km，实际续航可能只有550km</li>
+              <li>如果水上雅丹附近有加油站（不一定开门），<strong>能加就加</strong>，不要犹豫</li>
+              <li>G315部分路段有冻土沉降，路面起伏大，<strong>车速别超80km/h</strong>，否则飞坡</li>
+              <li>当金山垭口海拔3648m，<strong>长下坡约30km</strong>，持续踩刹车会导致刹车过热失效！必须用AMT手动模式挂2-3挡利用发动机制动</li>
+              <li>U型公路<strong>严禁在公路中间拍照</strong>——每年都有事故，大货车刹不住车！只在路边观景台拍</li>
+              <li>柴达木盆地手机信号弱，<strong>提前下载离线地图</strong>（高德/百度离线包）</li>
+              <li>当天车程长+海拔变化大，<strong>驾驶员注意疲劳</strong>，每1.5-2h必须轮换或休息</li>
+              <li>如果下午15:00还没到水上雅丹，<strong>果断放弃水上雅丹</strong>直奔敦煌，天黑翻当金山太危险</li>
+              <li>备选方案：拆成两天——大柴旦过夜一晚，第二天再到敦煌</li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：房车自炊（德令哈出发前做好，路上吃）</li>
+              <li>午餐：翡翠湖旁房车简餐（三明治/泡面/自热饭）</li>
+              <li>下午茶：水上雅丹观光车起点有小卖部（泡面/水）</li>
+              <li>晚餐：抵达敦煌后吃沙洲夜市——驴肉黄面/胡杨焖饼/烤羊肉/杏皮水</li>
+            </ul>
+          </div>
+
+          <div class="scenic-block">
+            <div class="scenic-block-title">翡翠湖（大柴旦）</div>
+            <p>大柴旦以西约11km，薄荷绿色盐湖，免费（部分收取60元清洁费）。比茶卡人少很多，无人机航拍效果极佳。建议游览30-60分钟。注意湖边盐壳锋利，穿厚底鞋。</p>
+          </div>
+          <div class="scenic-block">
+            <div class="scenic-block-title">水上雅丹（乌素特）</div>
+            <p>全球唯一水上雅丹地貌，门票60元+观光车60元。雅丹群矗立在水中，非常震撼。游览1-1.5小时足够。最佳拍摄时间是上午（顺光），下午逆光效果一般。</p>
+          </div>
+
+          <div class="alt-block">今日海拔先升后降（2980m→3648m→1100m），当金山垭口为全程第二高海拔点。下坡时注意耳压变化，可嚼口香糖缓解。</div>
+
+          <div class="v80-tip-section-title">V80 专属驾驶提示（最关键一天）</div>
+          <div class="v80-tip critical">
+            <ul class="v80-tip-list critical">
+              <li><strong>大柴旦必须加满油+带20L备用油桶！</strong>这是全程最大的燃油焦虑段</li>
+              <li>G315有冻土沉降路段，V80减震能过滤但车速别超80，否则车内东西会飞起来</li>
+              <li>当金山长下坡约30km，<strong>AMT手动模式挂2-3挡控速</strong>，避免刹车过热。具体操作：下坡前减速到60km/h，切手动模式，挂2挡，让发动机制动控制车速</li>
+              <li>当金山下坡过程中如刹车踏板变软（过热征兆），立即靠边停车降温，<strong>不要继续开</strong></li>
+              <li>柴达木盆地无人区手机无信号，V80无SOS功能，<strong>出发前告知家人行程路线</strong></li>
+              <li>V80车高3.05m，当金山隧道限高4m可通行</li>
+              <li>到达敦煌后气温骤升（可能35℃+），<strong>立即开驻车空调降温</strong>，检查锂电池电量</li>
+            </ul>
+          </div>
+
+          <div class="stay-info">敦煌市区营地或鸣沙山露营基地 <span class="stay-detail">（海拔1100m，气温高需开空调）</span></div>
+        </div>
+      </div>
+
+      <!-- ===== D4 ===== -->
+      <div class="day-card" data-day="D4">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d4">D4</div>
+          <div>
+            <div class="day-route">敦煌休整一天 — 莫高窟 + 鸣沙山月牙泉</div>
+            <div class="day-meta">0km车程 · 海拔1100m · 休整+游览 · 全程唯一休息日</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">全天在敦煌游览。上午莫高窟，下午鸣沙山月牙泉看日落，晚上沙洲夜市。利用这天做车辆休整。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">08:00</div><div class="timeline-content"><strong>莫高窟数字展示中心</strong>——先看两部数字电影（《千年莫高》《梦幻佛宫》），了解背景</div></div>
+            <div class="timeline-row"><div class="timeline-time">09:30</div><div class="timeline-content"><strong>乘景区大巴前往莫高窟实体洞窟</strong>——A类票可看8个洞窟+讲解，B类票看4个洞窟</div></div>
+            <div class="timeline-row"><div class="timeline-time">09:30-13:00</div><div class="timeline-content"><strong>游览莫高窟</strong>——跟随讲解员参观，全程约3-4小时。<strong>洞窟内禁止拍照！</strong></div></div>
+            <div class="timeline-row"><div class="timeline-time">13:00</div><div class="timeline-content">午餐：敦煌市区餐馆（驴肉黄面/羊肉粉）</div></div>
+            <div class="timeline-row"><div class="timeline-time">14:00-16:00</div><div class="timeline-content"><strong>午休+车辆休整</strong>——回房车补水电、排污、检查轮胎、开空调休息</div></div>
+            <div class="timeline-row"><div class="timeline-time">16:00</div><div class="timeline-content"><strong>出发前往鸣沙山月牙泉</strong>——门票110元，下午进避开高温</div></div>
+            <div class="timeline-row"><div class="timeline-time">16:30-19:30</div><div class="timeline-content"><strong>鸣沙山月牙泉游览</strong>——骑骆驼（100元）、滑沙（15元）、爬沙山看日落（日落约19:30-20:30）</div></div>
+            <div class="timeline-row"><div class="timeline-time">20:00</div><div class="timeline-content"><strong>沙洲夜市</strong>——驴肉黄面、胡杨焖饼、杏皮水、烤羊肉串、李广杏</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>⚠️ 莫高窟门票：出发前30天在"莫高窟参观预约网"小程序抢A类票（238元/人）</li>
+              <li>莫高窟门票备选：抢不到A类就买B类（100元，现场可买，只看4个洞窟）</li>
+              <li>莫高窟备选：或去西千佛洞替代（人少，门票30元）</li>
+              <li>车辆休整：检查轮胎磨损、补充水电、排污</li>
+              <li>车辆休整：检查机油、尿素液位</li>
+              <li>车辆休整：给锂电池充满电（明天370km车程）</li>
+              <li>鸣沙山：带防沙鞋套或穿封闭鞋（沙子会进鞋）</li>
+              <li>鸣沙山：带足够饮用水（沙漠中脱水快）</li>
+              <li>采购明天路上的食材和饮水</li>
+              <li>确认明天D5瓜州加油计划</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项</div>
+            <ul class="warn-list">
+              <li>莫高窟<strong>洞窟内严禁拍照</strong>（闪光灯加速壁画氧化），违反者会被请出</li>
+              <li>莫高窟参观需跟随讲解员，不能单独行动，<strong>不要触摸壁画和雕塑</strong></li>
+              <li>敦煌气温7-8月可达35℃+，<strong>中午避免户外活动</strong>，鸣沙山一定要16:00后进</li>
+              <li>鸣沙山骑骆驼注意安全，<strong>骆驼起身/趴下时抓紧扶手</strong>，手机相机系好防丢绳</li>
+              <li>爬沙山非常消耗体力，<strong>带足水</strong>，量力而行，有心肺疾病者不要爬</li>
+              <li>沙洲夜市注意价格——先问价再点餐，部分摊位有宰客现象</li>
+              <li>莫高窟参观约需4小时，<strong>车内留人看管行李</strong>或锁好门窗</li>
+              <li>敦煌海拔1100m，驻车空调需全天开，<strong>注意锂电池电量</strong>，及时接外接电源</li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：房车自炊（敦煌早餐选择少）</li>
+              <li>午餐：敦煌市区——驴肉黄面（顺张黄面馆/达记酱驴肉黄面）</li>
+              <li>晚餐：沙洲夜市——驴肉黄面/胡杨焖饼/烤全羊/杏皮水/李广杏</li>
+              <li>推荐小吃：敦煌酿皮、羊肉粉汤、泡儿油糕</li>
+              <li>买几瓶杏皮水路上喝（敦煌特产，酸甜解暑）</li>
+            </ul>
+          </div>
+
+          <div class="scenic-block">
+            <div class="scenic-block-title">莫高窟 — 世界文化遗产</div>
+            <p>A类票238元/人（含数字电影+8个洞窟+讲解），B类票100元/人（4个洞窟）。旺季A类票每日仅6000张，<strong>出发前30天在"莫高窟参观预约网"小程序设闹钟抢票</strong>。参观流程：数字中心看电影→大巴到洞窟→跟随讲解员参观→九层楼拍照→返回。全程约4小时。洞窟内禁止拍照。</p>
+          </div>
+          <div class="scenic-block">
+            <div class="scenic-block-title">鸣沙山·月牙泉</div>
+            <p>门票110元/人。沙漠奇观——沙山环抱中的一弯清泉。骑骆驼100元/人，滑沙15元/次。建议16:00后进入避开高温，爬上沙山看日落是精华（日落约19:30-20:30）。带防沙鞋套，穿封闭鞋。游览3-4小时。</p>
+          </div>
+
+          <div class="alt-block">今日海拔1100m，无高反风险。但敦煌气温高（35℃+），注意防暑降温、多喝水。</div>
+
+          <div class="v80-tip-section-title">V80 专属提示（车辆休整日）</div>
+          <div class="v80-tip">
+            <ul class="v80-tip-list">
+              <li>今天是全程唯一休息日，<strong>利用这天做全面车辆检查</strong>：轮胎磨损/胎压/机油/尿素/刹车片厚度</li>
+              <li>敦煌市区有房车营地（鸣沙山附近），<strong>接外接电源给锂电池充满</strong>，明天370km车程</li>
+              <li>排污+加满清水——营地有排污设施，充分利用</li>
+              <li>敦煌气温35℃+，驻车空调全天开，<strong>注意锂电池电量</strong>，及时接外接电源</li>
+              <li>莫高窟停车场较大但无遮阴，<strong>车窗贴反光遮阳板</strong>，否则回来车内像烤箱</li>
+              <li>检查备胎——明天开始进入河西走廊，服务站间距大</li>
+              <li>如有需要，敦煌有汽车维修店可做简单保养</li>
+            </ul>
+          </div>
+
+          <div class="stay-info">敦煌同上 <span class="stay-detail">（继续住敦煌市区营地，海拔1100m）</span></div>
+        </div>
+      </div>
+
+      <!-- ===== D5 ===== -->
+      <div class="day-card" data-day="D5">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d5">D5</div>
+          <div>
+            <div class="day-route">敦煌 → 瓜州(大地之子) → 嘉峪关</div>
+            <div class="day-meta">370km · 4h高速 · 海拔1100→1700m · 河西走廊横风日</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">走柳格高速转连霍高速，途经瓜州看"大地之子"雕塑，下午抵达嘉峪关关城看日落。注意河西走廊横风。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">08:00</div><div class="timeline-content"><strong>敦煌出发</strong>——走柳格高速G3011南行，前往瓜州方向</div></div>
+            <div class="timeline-row"><div class="timeline-time">08:00-09:30</div><div class="timeline-content"><strong>敦煌→瓜州</strong>（约120km/1.5h），高速路况好</div></div>
+            <div class="timeline-row"><div class="timeline-time">09:30</div><div class="timeline-content">⚠️ <strong>瓜州县城或服务区加满油</strong>——瓜州至嘉峪关段服务区不一定全开</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:00</div><div class="timeline-content"><strong>大地之子雕塑</strong>——瓜州出口下高速走约18km，戈壁滩上的巨大婴儿雕塑（清华美院），免费打卡</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:00-11:00</div><div class="timeline-content">拍照打卡，周边还有"无界"雕塑可一并游览</div></div>
+            <div class="timeline-row"><div class="timeline-time">11:00</div><div class="timeline-content"><strong>返回高速，走连霍高速G30东行</strong>前往嘉峪关（约250km/2.5h）</div></div>
+            <div class="timeline-row"><div class="timeline-time">13:30</div><div class="timeline-content"><strong>抵达嘉峪关</strong>——午餐，下午游览关城</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:00-18:00</div><div class="timeline-content"><strong>嘉峪关关城</strong>——门票110元，"天下第一雄关"，建议下午游览看日落</div></div>
+            <div class="timeline-row"><div class="timeline-time">18:30</div><div class="timeline-content">入住营地，晚餐</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>瓜州加满0号柴油（连霍高速服务区不一定全开）</li>
+              <li>大地之子：车停在路边指定区域，不要开进戈壁</li>
+              <li>嘉峪关关城：买票后先看博物馆了解历史再逛关城</li>
+              <li>嘉峪关：下午游览避开正午高温</li>
+              <li>检查轮胎——河西走廊路面粗糙，胎面磨损快</li>
+              <li>每1.5h进服务区休息防"公路催眠"</li>
+              <li>到达嘉峪关后补充水电</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项</div>
+            <ul class="warn-list">
+              <li>河西走廊<strong>横风极大</strong>，V80车身高（3.05m）、车身宽（2.35m），受侧风影响明显，<strong>双手握方向盘，降速到90km/h</strong></li>
+              <li>连霍高速笔直长路极长，容易"公路催眠"（hypnosis），<strong>每1.5小时必须进服务区休息</strong>，下车走动</li>
+              <li>嘉峪关附近有军事区，<strong>严禁对军事设施拍照</strong>，看到"军事禁区"标志立即收起手机</li>
+              <li>大地之子雕塑在戈壁中，路边停车注意来车，<strong>不要开进戈壁</strong>（可能陷车）</li>
+              <li>瓜州至嘉峪关服务区间距大，<strong>在瓜州加满油</strong>再出发</li>
+              <li>嘉峪关关城游览需2-3小时，下午15:00后进入避高温</li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：房车自炊</li>
+              <li>午餐：瓜州服务区简餐或房车自炊（高速沿线餐饮一般）</li>
+              <li>晚餐：嘉峪关市区——烤肉/手抓羊肉/大唐美食街</li>
+              <li>推荐：嘉峪关烤肉（比敦煌便宜量大）</li>
+            </ul>
+          </div>
+
+          <div class="scenic-block">
+            <div class="scenic-block-title">大地之子雕塑</div>
+            <p>瓜州县锁阳城镇270县道红山坡，距连霍高速瓜州出口约18km。清华美院董书兵教授作品，戈壁滩上15m长巨型婴儿雕塑，免费。旁边还有"无界"雕塑可一并打卡。建议停留30-60分钟。</p>
+          </div>
+          <div class="scenic-block">
+            <div class="scenic-block-title">嘉峪关关城 — "天下第一雄关"</div>
+            <p>门票110元/人。明代万里长城西端起点，关城布局为"内城+外城+城濕"三重防线。建议游览路线：长城博物馆→关城入口→文昌阁→关帝庙→内城→柔远楼→光化楼→城墙→出口。下午游览可看日落光影效果。游览2-3小时。</p>
+          </div>
+
+          <div class="alt-block">今日海拔从1100m升至1700m，变化平缓，无高反风险。但河西走廊干燥炎热，注意补水。</div>
+
+          <div class="v80-tip-section-title">V80 专属驾驶提示</div>
+          <div class="v80-tip">
+            <ul class="v80-tip-list">
+              <li>河西走廊横风大，V80车身高受侧风影响明显——<strong>双手握方向盘，降速到90km/h</strong>，不要单手开</li>
+              <li>感觉车身被风吹偏时，<strong>不要猛打方向纠正</strong>，轻收油门微调方向即可</li>
+              <li>连霍高速笔直长路，AMT定速巡航可减轻疲劳，但<strong>必须保持警觉</strong>，每1.5h休息</li>
+              <li>瓜州出口到大地之子雕塑走县道，路面有碎石，<strong>减速慢行避免崩胎</strong></li>
+              <li>嘉峪关市区停车选宽敞停车场，V80车长近6m标准车位停不下</li>
+              <li>嘉峪关附近有军事区，<strong>严禁拍照军事设施</strong></li>
+            </ul>
+          </div>
+
+          <div class="stay-info">嘉峪关市区停车场或营地 <span class="stay-detail">（海拔1700m，气温舒适）</span></div>
+        </div>
+      </div>
+
+      <!-- ===== D6 ===== -->
+      <div class="day-card" data-day="D6">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d6">D6</div>
+          <div>
+            <div class="day-route">嘉峪关 → 张掖七彩丹霞</div>
+            <div class="day-meta">230km · 2.5h · 海拔1700→1790m · 最轻松的一天</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">上午轻松高速到张掖，下午游览七彩丹霞看日落。全程路况好，驾驶强度低。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">09:00</div><div class="timeline-content"><strong>嘉峪关出发</strong>——走连霍高速G30东行前往张掖（约230km/2.5h）</div></div>
+            <div class="timeline-row"><div class="timeline-time">09:00-11:30</div><div class="timeline-content">高速路程，路况良好，途中可在酒泉服务区休息</div></div>
+            <div class="timeline-row"><div class="timeline-time">11:30</div><div class="timeline-content"><strong>抵达张掖</strong>——下高速走S213省道西行约40km到丹霞景区（临泽县倪家营）</div></div>
+            <div class="timeline-row"><div class="timeline-time">12:00</div><div class="timeline-content">午餐：张掖市区或丹霞景区附近餐馆</div></div>
+            <div class="timeline-row"><div class="timeline-time">13:00-15:00</div><div class="timeline-content">午休+房车补水电，等待下午最佳游览时间</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:30</div><div class="timeline-content"><strong>进入七彩丹霞景区</strong>——门票+区间车74元</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:30-19:30</div><div class="timeline-content"><strong>游览七彩丹霞</strong>——坐区间车依次游览4个观景台，<strong>重点在4号观景台等日落</strong>（约19:30-20:30）</div></div>
+            <div class="timeline-row"><div class="timeline-time">20:00</div><div class="timeline-content">返回停车场，驻车过夜</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>七彩丹霞门票：提前在"张掖七彩丹霞"公众号或美团预订</li>
+              <li>确认区间车运营时间（旺季末班车约20:30）</li>
+              <li>带防晒霜+墨镜+遮阳帽（丹霞无遮阴）</li>
+              <li>带足够饮用水（景区内无小卖部）</li>
+              <li>相机/手机充满电——4号观景台日落出片率极高</li>
+              <li>景区停车场可驻车过夜（有卫生间无水电桩）</li>
+              <li>检查明天D7祁连山路线——全程最复杂山路</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项</div>
+            <ul class="warn-list">
+              <li>七彩丹霞景区实行环保区间车制，<strong>房车不可开入景区</strong>，停在景区停车场</li>
+              <li>丹霞景区<strong>无遮阴</strong>，下午仍可能暴晒，16:00后进入较舒适</li>
+              <li>4号观景台是看日落最佳位置，<strong>提前占位</strong>（旺季人非常多）</li>
+              <li>丹霞地貌<strong>禁止踩踏</strong>——彩色土层非常脆弱，踩一脚几十年恢复不了</li>
+              <li>景区内手机信号弱，<strong>约定好集合时间和地点</strong></li>
+              <li>区间车末班车时间需确认（旺季约20:30），<strong>不要错过末班车</strong>否则要徒步几公里</li>
+              <li>明天D7是全程最复杂的山路，今晚<strong>早睡养精蓄锐</strong></li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：房车自炊</li>
+              <li>午餐：张掖市区——孙记炒炮/搓鱼子/牛肉小饭</li>
+              <li>晚餐：丹霞景区附近农家乐或房车自炊</li>
+              <li>推荐：张掖特色搓鱼子、炒炮、牛肉小饭</li>
+            </ul>
+          </div>
+
+          <div class="scenic-block">
+            <div class="scenic-block-title">张掖七彩丹霞 — 世界地质公园</div>
+            <p>门票+区间车74元/人。位于临泽县倪家营，距张掖市区西约40km。景区有4个观景台，区间车依次停靠。<strong>4号观景台日落最佳</strong>，色彩最绚丽（红/黄/橙/绿层理分明）。建议15:30进入，游览至日落（约19:30-20:30）。航拍效果极佳（需注意禁飞区规定）。</p>
+          </div>
+
+          <div class="alt-block">今日海拔约1700-1790m，无高反风险。张掖气温舒适，是全程最宜人的一天。</div>
+
+          <div class="v80-tip-section-title">V80 专属驾驶提示</div>
+          <div class="v80-tip">
+            <ul class="v80-tip-list">
+              <li>连霍高速路况好，今天驾驶轻松——<strong>但别放松警惕</strong>，明天D7是全程最复杂山路</li>
+              <li>张掖下高速走S213省道到丹霞景区约40km，路面有破损路段，减速慢行</li>
+              <li>丹霞景区停车场较大但高峰期可能满员，<strong>建议15:00前到停车场占位</strong></li>
+              <li>停车场可驻车过夜（有卫生间无水电桩），<strong>今晚不接外接电源</strong>，靠电池供电，注意电量</li>
+              <li>如需充电，可去张掖市区营地（距景区40km），但第二天要多跑一趟</li>
+              <li>今晚检查明天D7路线：G227国道翻越祁连山，路况复杂，提前下载离线地图</li>
+            </ul>
+          </div>
+
+          <div class="stay-info">七彩丹霞景区停车场或张掖市区营地 <span class="stay-detail">（有卫生间无水电桩，海拔1790m）</span></div>
+        </div>
+      </div>
+
+      <!-- ===== D7 ===== -->
+      <div class="day-card" data-day="D7">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d7">D7</div>
+          <div>
+            <div class="day-route">张掖 → 祁连·卓尔山 → 门源 → 西宁</div>
+            <div class="day-meta">440km · 6h · 海拔1700→4120→2260m · 全程最复杂山路+最高海拔</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">走G227翻越祁连山，经卓尔山、大冬树山垭口（4120m全程最高）、门源油菜花海，傍晚到西宁。山路弯多，驾驶难度最大。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">07:30</div><div class="timeline-content"><strong>张掖出发</strong>——走G227国道南行翻越祁连山，今天山路多，务必早起</div></div>
+            <div class="timeline-row"><div class="timeline-time">07:30-10:00</div><div class="timeline-content"><strong>张掖→峨堡古镇</strong>（约180km/2.5h），G227国道翻越祁连山北麓</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:00</div><div class="timeline-content">途经<strong>峨堡古镇</strong>——丝绸之路驿站，可短暂停留拍照</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:30</div><div class="timeline-content"><strong>抵达祁连县</strong>——翻越景阳岭垭口（3767m）</div></div>
+            <div class="timeline-row"><div class="timeline-time">10:30-13:00</div><div class="timeline-content"><strong>卓尔山景区</strong>——门票60元，丹霞+雪山+草原同框，"红润的皇后"，游览约2小时</div></div>
+            <div class="timeline-row"><div class="timeline-time">13:00</div><div class="timeline-content">午餐：祁连县城餐馆</div></div>
+            <div class="timeline-row"><div class="timeline-time">14:00</div><div class="timeline-content"><strong>出发前往门源</strong>——走S204省道翻越大冬树山垭口</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:00</div><div class="timeline-content">⚠️ <strong>大冬树山垭口（4120m）——全程最高海拔点！</strong>V80动力衰减明显，提前降挡</div></div>
+            <div class="timeline-row"><div class="timeline-time">16:00</div><div class="timeline-content">下山到达<strong>门源</strong>——百里油菜花海（7月中-8月初盛花期），免费路边观赏</div></div>
+            <div class="timeline-row"><div class="timeline-time">16:00-17:30</div><div class="timeline-content">门源油菜花海拍照，走宁张公路南行</div></div>
+            <div class="timeline-row"><div class="timeline-time">17:30-19:30</div><div class="timeline-content"><strong>门源→西宁</strong>（约150km/2h），宁张公路大货车多，保持车距</div></div>
+            <div class="timeline-row"><div class="timeline-time">19:30</div><div class="timeline-content"><strong>抵达西宁</strong>——入住营地，晚餐休整</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>提前下载G227/S204离线地图（祁连山区信号弱）</li>
+              <li>卓尔山门票：现场买或提前在美团预订</li>
+              <li>大冬树山垭口4120m——备好氧气瓶，下车拍照不要剧烈跑跳</li>
+              <li>门源油菜花海：路边免费观赏，观景台收费（圆山观花台60元）</li>
+              <li>全程山路——两人轮换驾驶，每1.5h换人</li>
+              <li>到达西宁后做最后的补给（明天返程）</li>
+              <li>检查车辆：山路对刹车和轮胎磨损大，到西宁后检查</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项</div>
+            <ul class="warn-list">
+              <li>大冬树山垭口<strong>海拔4120m，全程最高点</strong>——下车拍照时不要跑跳，可能有高反（头痛/气短），<strong>备好氧气瓶</strong></li>
+              <li>G227国道<strong>弯多路窄</strong>，V80车身宽（2.35m），过弯降到30km/h以下，注意对向来车</li>
+              <li>海拔先升后降（1700m→4120m→2260m），<strong>注意耳朵气压变化</strong>，嚼口香糖/做吞咽动作缓解</li>
+              <li>门源→西宁走宁张公路，<strong>大货车多</strong>，保持安全车距，不要长时间跟在大货车后面</li>
+              <li>7-8月祁连山区可能有阵雨/冰雹，<strong>关注天气预报</strong>，雨天山路湿滑降速</li>
+              <li>带老人小孩可在<strong>祁连县多住一晚</strong>拆分行程（D7拆成两天），避免一天山路太累</li>
+              <li>大冬树山垭口气温可能低至5℃，<strong>带厚外套下车拍照</strong></li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：房车自炊</li>
+              <li>午餐：祁连县城——手抓羊肉/黄蘑菇/牦牛肉（祁连羊肉是西北最好的）</li>
+              <li>下午茶：门源路边小吃摊（酿皮/酸奶）</li>
+              <li>晚餐：西宁市区——莫家街/大新街夜市（手抓/酿皮/酸奶/烤肉）</li>
+              <li>推荐：祁连黄蘑菇非常出名，可买干货带回家</li>
+            </ul>
+          </div>
+
+          <div class="scenic-block">
+            <div class="scenic-block-title">卓尔山 — "红润的皇后"</div>
+            <p>门票60元/人。祁连县八宝镇，丹霞地貌+雪山+草原+林海同框，被称为"红润的皇后"。山顶视野极佳，可远眺牛心山（阿咪东索）。游览约2小时，有区间车到半山腰再步行上山。</p>
+          </div>
+          <div class="scenic-block">
+            <div class="scenic-block-title">门源百里油菜花海</div>
+            <p>7月中-8月初盛花期，绵延百公里的油菜花海，免费路边观赏。收费观景台：圆山观花台（60元）、芬芳浴（60元）。路边停车注意安全，不要停在弯道处。航拍效果极佳。</p>
+          </div>
+
+          <div class="alt-block">今日海拔变化剧烈（1700m→4120m→2260m），大冬树山垭口4120m是全程最高点。有高反症状的乘客可在垭口短暂停留后迅速下山，不要长时间逗留。</div>
+
+          <div class="v80-tip-section-title">V80 专属驾驶提示（全程最复杂山路）</div>
+          <div class="v80-tip">
+            <ul class="v80-tip-list">
+              <li>G227国道<strong>弯多路窄</strong>，V80车身宽2.35m，过弯前<strong>降到30km/h以下</strong>，鸣笛示意</li>
+              <li>大冬树山垭口4120m，2.0T动力衰减约25-30%，<strong>提前降挡拉高转速到3000转冲坡</strong></li>
+              <li>上坡时AMT手动模式挂2-3挡保持高转速；下坡同样手动模式挂2-3挡利用发动机制动</li>
+              <li>祁连山区弯道盲区多，<strong>绝不借道超车</strong>，跟车行驶即可</li>
+              <li>S204省道部分路段路面较窄，V80车宽需注意会车——在宽阔处等候对向车通过</li>
+              <li>宁张公路大货车多，<strong>保持50m以上车距</strong>，不要急刹</li>
+              <li>到达西宁后检查刹车片温度和磨损——连续山路对刹车消耗大</li>
+            </ul>
+          </div>
+
+          <div class="stay-info">西宁市区营地 <span class="stay-detail">（海拔2260m，返程前最后补给点）</span></div>
+        </div>
+      </div>
+
+      <!-- ===== D8 ===== -->
+      <div class="day-card" data-day="D8">
+        <div class="day-header" onclick="toggleCard(this)">
+          <div class="day-badge d8">D8</div>
+          <div>
+            <div class="day-route">西宁 → 兰州</div>
+            <div class="day-meta">220km · 3h高速 · 海拔2260→1520m · 轻松收尾</div>
+          </div>
+          <button class="expand-btn">展开详情 ▾</button>
+        </div>
+        <div class="day-summary">上午西宁采购特产，中午走G6京藏高速返兰州，到兰州后排污清洁，行程结束。</div>
+        <div class="day-detail">
+          <div class="timeline">
+            <div class="timeline-row"><div class="timeline-time">08:00</div><div class="timeline-content"><strong>起床收拾</strong>——排空灰水/黑水箱，清理车内</div></div>
+            <div class="timeline-row"><div class="timeline-time">09:00-11:00</div><div class="timeline-content"><strong>西宁采购特产</strong>——牛肉干、青稞酒、枸杞、酸奶、祁连黄蘑菇</div></div>
+            <div class="timeline-row"><div class="timeline-time">11:00</div><div class="timeline-content">午餐：西宁最后一餐——手抓羊肉/酿皮</div></div>
+            <div class="timeline-row"><div class="timeline-time">12:00</div><div class="timeline-content"><strong>出发返兰州</strong>——走G6京藏高速东行，全程220km/3h</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:00</div><div class="timeline-content"><strong>抵达兰州</strong>——行程结束！🎉</div></div>
+            <div class="timeline-row"><div class="timeline-time">15:00-16:00</div><div class="timeline-content"><strong>到兰州后排污、清洁、检查车辆</strong>——如果还车需提前确认还车点</div></div>
+          </div>
+
+          <div class="task-block">
+            <div class="task-block-title">今日必做任务清单</div>
+            <ul class="task-list">
+              <li>排空灰水箱和黑水箱，清洗干净</li>
+              <li>清理车内垃圾、整理行李</li>
+              <li>西宁采购特产（牛肉干/青稞酒/枸杞/黄蘑菇）</li>
+              <li>检查油箱——到兰州后如还车需加满油</li>
+              <li>到兰州后排污、清洁车辆内外</li>
+              <li>如为租车：检查还车点位置、营业时间</li>
+              <li>如为租车：拍照留证车辆状态（防纠纷）</li>
+              <li>整理沿途照片和视频，备份到云端</li>
+            </ul>
+          </div>
+
+          <div class="warn-block">
+            <div class="warn-block-title">今日重点注意事项</div>
+            <ul class="warn-list">
+              <li>全程高速，路况好，但<strong>不要放松警惕</strong>——回家路上最容易松懈</li>
+              <li>西宁到兰州高速偶有修路/拥堵，<strong>出发前查看路况</strong>（高德/百度导航）</li>
+              <li>兰州进城避开17:00-19:00晚高峰</li>
+              <li>如果还车：提前确认还车点营业时间，<strong>预留1小时缓冲</strong></li>
+              <li>还车前<strong>拍照留证</strong>——车头/车尾/车身两侧/里程表/油表，防止后续纠纷</li>
+              <li>检查车内有无遗漏个人物品（充电器/数据线/衣物/药品）</li>
+            </ul>
+          </div>
+
+          <div class="food-block">
+            <div class="food-block-title">餐饮建议</div>
+            <ul class="food-list">
+              <li>早餐：房车自炊（消耗剩余食材）</li>
+              <li>午餐：西宁最后一餐——手抓羊肉/酿皮/酸奶（莫家街/大新街）</li>
+              <li>晚餐：回到兰州——牛肉面收尾！（马子禄/白建强）</li>
+              <li>采购特产推荐：可可西里牛肉干、青稞酒、柴达木枸杞、祁连黄蘑菇、酸奶</li>
+            </ul>
+          </div>
+
+          <div class="alt-block">今日海拔从2260m降至1520m，全程下降，无高反风险。身体从高原回到低海拔可能"醉氧"（犯困），注意休息。</div>
+
+          <div class="v80-tip-section-title">V80 专属提示</div>
+          <div class="v80-tip">
+            <ul class="v80-tip-list">
+              <li>全程高速，轻松收尾——但连续8天驾驶后<strong>疲劳累积</strong>，注意休息</li>
+              <li>到兰州后做<strong>最终排污、清洁、检查车辆状态</strong></li>
+              <li>检查轮胎磨损——8天2600km山路对轮胎消耗大，记录磨损情况</li>
+              <li>检查刹车片厚度——连续山路驾驶后刹车片可能变薄</li>
+              <li>检查机油、尿素液位——如还车需补满</li>
+              <li>清理车内异味——8天旅途车内可能有食物/汗味，开窗通风+除味</li>
+              <li>如为自有车：建议回兰州后做一次<strong>全面保养</strong>（换机油/检查刹车/四轮定位）</li>
+            </ul>
+          </div>
+
+          <div class="stay-info">回到兰州，行程结束 🎉 <span class="stay-detail">（海拔1520m）</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bottom-section">
+    <div class="reminder-box">
+      <h3>⚠️ 三大避坑提醒</h3>
+      <div class="reminder-item">
+        <div class="reminder-num">1</div>
+        <div class="reminder-text"><strong>莫高窟门票</strong> — 旺季A类票每日仅6000张,出发前30天设闹钟抢票(238元/人)。抢不到买B类票(100元)或去西千佛洞替代。</div>
+      </div>
+      <div class="reminder-item">
+        <div class="reminder-num">2</div>
+        <div class="reminder-text"><strong>大柴旦→敦煌燃油</strong> — 全程约500km基本无可靠加油站,V80满油续航理论660km但高原油耗飙升。务必加满+带20L备用油桶。</div>
+      </div>
+      <div class="reminder-item">
+        <div class="reminder-num">3</div>
+        <div class="reminder-text"><strong>AMT坡道起步</strong> — 6挡AMT坡道松刹车有1-2秒延迟会溜车。口诀:拉手刹→踩油门到1500转→松手刹→继续给油。</div>
+      </div>
+    </div>
+
+    <div class="supply-box">
+      <h3>⚡ 水电补给计划</h3>
+      <table class="supply-table">
+        <tr><th>城市</th><th>补给类型</th><th>说明</th></tr>
+        <tr><td>兰州</td><td>全套</td><td>出发前整备,水/电/油加满</td></tr>
+        <tr><td>西宁</td><td>全套</td><td>最后大型补给点,营地有水电排污</td></tr>
+        <tr><td>青海湖</td><td>水+电</td><td>黑马河营地有水电</td></tr>
+        <tr><td>德令哈</td><td>水+油</td><td>城市营地,加油站多</td></tr>
+        <tr class="warn"><td>大柴旦</td><td>油+水</td><td>⚠️必须加满油+备用油桶!</td></tr>
+        <tr><td>敦煌</td><td>全套</td><td>休整日充满水电排污</td></tr>
+        <tr><td>嘉峪关</td><td>水+电</td><td>市区停车场可补给</td></tr>
+        <tr><td>张掖</td><td>水+电</td><td>丹霞停车场或市区营地</td></tr>
+        <tr><td>西宁(返)</td><td>全套</td><td>返程前最后补给</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    青甘大环线 V80房车自驾攻略 · 兰州出发顺时针8天 · 总里程约2600km · 预算9000-13000元(6人)<br/>
+    核心三件事:大柴旦加满油 · 莫高窟提前抢票 · AMT坡起练熟
+  </div>
+
+</div>
+
+<script>
+// ===== Route waypoints (真实经纬度) =====
+const routeSegments = {
+  D1: [
+    { name:"兰州",     lat:36.061, lng:103.834, type:"city",   day:"D1", label:true,  info:"海拔1520m · 出发地 · 早上8:00出发走G6京藏高速", alt:"1520m" },
+    { name:"西宁",     lat:36.623, lng:101.778, type:"supply", day:"D1", label:true,  info:"海拔2260m · D1关键补给点,加满柴油+尿素+采购食材饮水,预计停留1-1.5h", alt:"2260m", supply:true },
+    { name:"拉脊山",   lat:36.358, lng:101.450, type:"pass",   day:"D1", label:true,  info:"海拔3820m · G109翻越 · 2.0T柴油动力明显衰减,提前降挡拉高转速到2500+冲坡", alt:"3820m" },
+    { name:"日月山",   lat:36.434, lng:101.111, type:"landmark", day:"D1", label:false, info:"G109里程碑 · 文成公主进藏纪念地 · 海拔约3520m", alt:"3520m" },
+    { name:"倒淌河",   lat:36.398, lng:100.971, type:"landmark", day:"D1", label:false, info:"G109与G214交汇处 · '天下河水皆东流,唯有此河向西淌'", alt:"3300m" },
+    { name:"二郎剑",   lat:36.582, lng:100.496, type:"scenic", day:"D1", label:true,  info:"青海湖南岸主景区(江西沟镇) · 门票90元 · 7-8月油菜花盛开 · 也可走牧民小道(20-50元/车)直达湖边", alt:"3200m" },
+    { name:"黑马河",   lat:36.739, lng:99.759,  type:"scenic", day:"D1", label:true,  info:"青海湖西南岸·日出最佳观赏点 · 环湖西路起点 · 当晚营地(有水电,约100-200元/晚)", alt:"3200m", stay:true },
+  ],
+  D2: [
+    { name:"茶卡盐湖", lat:36.740, lng:99.080,  type:"scenic", day:"D2", label:true,  info:"'天空之镜' · 门票60元+小火车50元 · 下午4-6点最佳拍摄 · 自带拖鞋防盐水腐蚀", alt:"3100m" },
+    { name:"德令哈",   lat:37.370, lng:97.360,  type:"supply", day:"D2", label:true,  info:"海西州首府 · 海拔2980m · 当晚营地 · 城市补给方便,有加油站/超市/医院", alt:"2980m", supply:true, stay:true },
+  ],
+  D3: [
+    { name:"大柴旦",   lat:37.852, lng:95.366,  type:"supply", day:"D3", label:true,  info:"⚠️全程最关键加油点!大柴旦→敦煌约500km基本无可靠加油站,必须加满+带20L备用油桶。小镇有加油站和超市", alt:"3173m", critical:true },
+    { name:"翡翠湖",   lat:37.866, lng:95.265,  type:"scenic", day:"D3", label:true,  info:"大柴旦翡翠湖 · 薄荷绿色盐湖 · 免费(部分收取60元) · 比茶卡人少,航拍出片", alt:"3148m" },
+    { name:"U型公路",  lat:37.370, lng:94.950,  type:"landmark", day:"D3", label:true,  info:"G315 766/780公里处网红打卡点 · 严禁在公路中间拍照!路边有观景台", alt:"3180m" },
+    { name:"水上雅丹", lat:37.624, lng:93.774,  type:"scenic", day:"D3", label:true,  info:"乌素特水上雅丹 · 全球唯一水上雅丹地貌 · 门票60元+观光车60元 · 游览1-2小时", alt:"2700m" },
+    { name:"当金山",   lat:39.318, lng:94.285,  type:"pass",   day:"D3", label:true,  info:"海拔3648m · 青甘分界垭口 · 长下坡约30km · AMT手动模式挂2-3挡控速,避免刹车过热", alt:"3648m" },
+    { name:"敦煌",     lat:40.142, lng:94.661,  type:"city",   day:"D3", label:true,  info:"海拔1100m · 当晚营地(鸣沙山附近) · 莫高窟+鸣沙山都在这里 · 建议早7点出发,两人轮换驾驶", alt:"1100m", stay:true },
+  ],
+  D4: [
+    { name:"莫高窟",   lat:40.040, lng:94.810,  type:"scenic", day:"D4", label:true,  info:"世界文化遗产 · ⚠️提前30天在'莫高窟参观预约网'小程序抢A类票238元 · B类票100元现场可买但只看4个洞窟", alt:"1200m" },
+    { name:"鸣沙山·月牙泉", lat:40.094, lng:94.665, type:"scenic", day:"D4", label:true,  info:"沙漠奇观 · 门票110元 · 下午16:00后进,骑骆驼滑沙看日落 · 晚上逛沙洲夜市", alt:"1150m" },
+  ],
+  D5: [
+    { name:"大地之子", lat:40.382, lng:95.839,  type:"landmark", day:"D5", label:true,  info:"瓜州县锁阳城镇270县道红山坡 · 清华美院巨大婴儿雕塑 · 免费 · 距连霍高速瓜州出口18km", alt:"1300m" },
+    { name:"嘉峪关",   lat:39.773, lng:98.289,  type:"scenic", day:"D5", label:true,  info:"'天下第一雄关' · 门票110元 · 下午游览看日落 · 当晚营地 · 海拔1700m · 附近有军事区严禁拍照", alt:"1700m", stay:true },
+  ],
+  D6: [
+    { name:"张掖",     lat:38.930, lng:100.450, type:"city",   day:"D6", label:false, info:"海拔1700m · 过路城市 · 下高速走S213约40km到丹霞景区", alt:"1700m" },
+    { name:"七彩丹霞", lat:38.958, lng:100.084, type:"scenic", day:"D6", label:true,  info:"张掖世界地质公园 · 门票+区间车74元 · 4号观景台日落最佳 · 停车场可驻车过夜(有卫生间无水电桩)", alt:"1790m", stay:true },
+  ],
+  D7: [
+    { name:"祁连",     lat:38.180, lng:100.250, type:"city",   day:"D7", label:false, info:"G227途经 · 祁连县城 · 卓尔山就在县城边 · 可在此多住一晚拆分行程", alt:"2787m" },
+    { name:"卓尔山",   lat:38.184, lng:100.276, type:"scenic", day:"D7", label:true,  info:"丹霞+雪山+草原同框 · 门票60元 · '红润的皇后' · 祁连县八宝镇", alt:"3100m" },
+    { name:"大冬树山", lat:38.015, lng:100.241, type:"pass",   day:"D7", label:true,  info:"大冬树山垭口 · S204省道 · 海拔4120m · 全程最高点 · V80动力衰减明显,提前降挡", alt:"4120m" },
+    { name:"门源",     lat:37.380, lng:101.620, type:"scenic", day:"D7", label:true,  info:"百里油菜花海 · 7月中-8月初盛花期 · 免费路边观赏,观景台收费", alt:"2866m" },
+    { name:"西宁(返)", lat:36.623, lng:101.778, type:"city",   day:"D7", label:true,  info:"海拔2260m · 当晚营地 · 返程前最后大型补给", alt:"2260m", stay:true },
+  ],
+  D8: [
+    { name:"兰州(返)", lat:36.061, lng:103.834, type:"city",   day:"D8", label:true,  info:"海拔1520m · 行程结束 · 到兰州后排污清洁检查车辆", alt:"1520m" },
+  ],
+};
+
+const dayColors = {
+  D1:"#FF6B35", D2:"#FF6B35", D3:"#FF6B35",
+  D4:"#F59E0B",
+  D5:"#0D9488", D6:"#0D9488",
+  D7:"#2563EB", D8:"#2563EB"
+};
+
+// ===== Initialize Map =====
+const map = L.map('map', {
+  center: [38.0, 98.5],
+  zoom: 7,
+  zoomControl: true,
+  attributionControl: false,
+  dragging: true,
+  scrollWheelZoom: false,
+  doubleClickZoom: true,
+  touchZoom: true,
+  boxZoom: false,
+  keyboard: false,
+  minZoom: 6,
+  maxZoom: 12,
+});
+
+// ===== 高德地图瓦片（中国境内最稳定，中文标注）=====
+const amapLayer = L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+  subdomains: ['1','2','3','4'],
+  maxZoom: 18,
+  attribution: '高德地图',
+});
+amapLayer.addTo(map);
+
+// 备用：OSM瓦片（万一高德加载失败时的fallback）
+const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  subdomains: 'abc',
+  maxZoom: 18,
+  attribution: 'OpenStreetMap',
+});
+
+// 高德瓦片加载失败时自动切换到OSM
+let amapFailed = false;
+amapLayer.on('tileerror', function() {
+  if (!amapFailed) {
+    amapFailed = true;
+    console.warn('高德瓦片加载失败，切换到OSM备用瓦片');
+    map.removeLayer(amapLayer);
+    osmLayer.addTo(map);
+  }
+});
+
+// ===== Layer groups for day filtering =====
+const dayLayers = {};
+const allMarkers = [];
+const allPolylines = [];
+
+// ===== Draw route lines and markers =====
+function buildLayers() {
+  Object.keys(routeSegments).forEach(day => {
+    const group = L.layerGroup();
+    const pts = routeSegments[day];
+
+    // Draw polyline if 2+ points
+    if (pts.length >= 2) {
+      const latlngs = pts.map(p => [p.lat, p.lng]);
+      const color = dayColors[day];
+      const isReturn = day === "D7" || day === "D8";
+
+      // White outline
+      const shadowLine = L.polyline(latlngs, {
+        color: '#ffffff', weight: 8, opacity: 0.7,
+      }).addTo(group);
+
+      // Main route line
+      const mainLine = L.polyline(latlngs, {
+        color: color, weight: 5, opacity: 0.9,
+        dashArray: isReturn ? "12,8" : null,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }).addTo(group);
+
+      allPolylines.push(mainLine);
+    }
+
+    // Add markers
+    pts.forEach(pt => {
+      let iconHtml = '';
+      let iconSize = [26, 26];
+      let iconAnchor = [13, 13];
+
+      if (pt.critical) {
+        iconHtml = '<div class="supply-marker">⛽</div>';
+        iconSize = [38, 38]; iconAnchor = [19, 19];
+      } else if (pt.type === 'supply') {
+        iconHtml = '<div class="supply-marker normal">⛽</div>';
+        iconSize = [26, 26]; iconAnchor = [13, 13];
+      } else if (pt.type === 'city') {
+        iconHtml = '<div class="city-marker" style="background:' + dayColors[pt.day] + '">' + pt.day + '</div>';
+        iconSize = [32, 32]; iconAnchor = [16, 16];
+      } else if (pt.type === 'scenic') {
+        iconHtml = '<div class="scenic-marker"></div>';
+        iconSize = [28, 28]; iconAnchor = [14, 14];
+      } else if (pt.type === 'pass') {
+        iconHtml = '<div class="pass-marker">▲</div>';
+        iconSize = [24, 24]; iconAnchor = [12, 12];
+      } else if (pt.type === 'landmark') {
+        iconHtml = '<div class="landmark-marker">·</div>';
+        iconSize = [20, 20]; iconAnchor = [10, 10];
+      }
+
+      const icon = L.divIcon({
+        className: 'custom-marker',
+        html: iconHtml,
+        iconSize: iconSize,
+        iconAnchor: iconAnchor,
+      });
+
+      const marker = L.marker([pt.lat, pt.lng], { icon, riseOnHover: true, riseOffset: 250 }).addTo(group);
+      allMarkers.push({ marker, pt });
+
+      // Permanent label
+      if (pt.label) {
+        const labelClass = pt.critical ? 'permanent-label critical' : 'permanent-label';
+        marker.bindTooltip(
+          '<div>' + pt.name + '</div>',
+          {
+            permanent: true,
+            direction: 'right',
+            offset: [14, 0],
+            className: labelClass,
+          }
+        );
+      }
+
+      // Hover tooltip with full info
+      marker.on('mouseover', function() {
+        const oldPerm = this.getTooltip();
+        this.unbindTooltip();
+        this.bindTooltip(
+          '<div class="tt-title">' + pt.name + '</div>' +
+          '<span class="tt-day" style="background:' + dayColors[pt.day] + '">' + pt.day + '</span>' +
+          '<span style="font-size:12px;color:#666">海拔 ' + pt.alt + '</span>' +
+          '<div class="tt-info">' + pt.info + '</div>' +
+          (pt.critical ? '<div class="tt-warn">⚠️ 关键:必须在此加满油+备用油桶</div>' : '') +
+          (pt.stay ? '<div class="tt-info">🏠 当晚驻车过夜</div>' : '') +
+          (pt.supply && !pt.critical ? '<div class="tt-info">⛽ 主要补给点</div>' : ''),
+          {
+            permanent: false,
+            direction: 'top',
+            offset: [0, -12],
+            className: 'hover-label',
+          }
+        ).openTooltip();
+      });
+
+      marker.on('mouseout', function() {
+        this.unbindTooltip();
+        if (pt.label) {
+          const labelClass = pt.critical ? 'permanent-label critical' : 'permanent-label';
+          this.bindTooltip(
+            '<div>' + pt.name + '</div>',
+            {
+              permanent: true,
+              direction: 'right',
+              offset: [14, 0],
+              className: labelClass,
+            }
+          );
+        }
+      });
+    });
+
+    dayLayers[day] = group;
+    group.addTo(map);
+  });
+}
+
+buildLayers();
+
+// ===== Fit bounds to entire route =====
+const allBounds = L.latLngBounds(allMarkers.map(m => [m.pt.lat, m.pt.lng]));
+map.fitBounds(allBounds, { padding: [80, 80] });
+
+// ===== Day filter buttons =====
+const toggleContainer = document.getElementById('dayToggle');
+toggleContainer.addEventListener('click', function(e) {
+  const btn = e.target.closest('.day-btn');
+  if (!btn) return;
+
+  const selectedDay = btn.dataset.day;
+
+  // Update button states
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Remove all day layers
+  Object.keys(dayLayers).forEach(day => {
+    map.removeLayer(dayLayers[day]);
+  });
+
+  if (selectedDay === 'all') {
+    // Show all
+    Object.keys(dayLayers).forEach(day => {
+      dayLayers[day].addTo(map);
+    });
+    map.fitBounds(allBounds, { padding: [80, 80] });
+  } else {
+    // Show only selected day
+    dayLayers[selectedDay].addTo(map);
+
+    // Also show adjacent days for context (previous day endpoint = this day startpoint)
+    const dayNum = parseInt(selectedDay.replace('D',''));
+    const prevDay = 'D' + (dayNum - 1);
+    const nextDay = 'D' + (dayNum + 1);
+    if (dayLayers[prevDay]) dayLayers[prevDay].addTo(map);
+    if (dayLayers[nextDay]) dayLayers[nextDay].addTo(map);
+
+    // Fit bounds to selected day's points
+    const dayPts = routeSegments[selectedDay].map(p => [p.lat, p.lng]);
+    if (dayPts.length > 0) {
+      map.fitBounds(L.latLngBounds(dayPts), { padding: [100, 100] });
+    }
+  }
+});
+
+// ===== Card expand/collapse =====
+function toggleCard(headerEl) {
+  const card = headerEl.closest('.day-card');
+  const btn = headerEl.querySelector('.expand-btn');
+  if (card.classList.contains('expanded')) {
+    card.classList.remove('expanded');
+    btn.textContent = '展开详情 ▾';
+  } else {
+    // Collapse all other cards
+    document.querySelectorAll('.day-card.expanded').forEach(c => {
+      c.classList.remove('expanded');
+      c.querySelector('.expand-btn').textContent = '展开详情 ▾';
+    });
+    card.classList.add('expanded');
+    btn.textContent = '收起 ▴';
+    // Scroll to the card
+    setTimeout(() => {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+}
+
+// Auto-expand D1 on load
+window.addEventListener('load', function() {
+  const d1Card = document.querySelector('.day-card[data-day="D1"]');
+  if (d1Card) {
+    d1Card.classList.add('expanded');
+    d1Card.querySelector('.expand-btn').textContent = '收起 ▴';
+  }
+});
+
+</script>
+</body>
+</html>
